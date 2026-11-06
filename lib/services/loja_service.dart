@@ -3,7 +3,7 @@ import 'package:loja_info/data_objects/product.dart';
 import "package:http/http.dart" as http;
 
 class LojaService {
-  //objetos para carregamento
+  // Objetos para carregamento
   List<Product> products = [];
   int productId = 0;
   Product productToShow = Product(
@@ -14,14 +14,14 @@ class LojaService {
       cost: 0,
       img: "NO Product");
 
-  //elementos da API
-  // final String baseUrl = "http://127.0.0.1:8000";
-  final String baseUrl = "https://loja-info.onrender.com";
+  // 1. MUDANÇA CRUCIAL: Usa HTTPS e o teu domínio real do Render
+  // Substitui "teu-projeto" pelo nome real da tua app no Render
+  final String baseUrl = "https://teu-projeto.onrender.com"; 
+  
   String nextRoute = "/products";
 
   Future<void> getProducts() async {
-    String apiUrl = "$baseUrl/api";
-    String address = "$apiUrl/products";
+    String address = "$baseUrl/api/products";
     var url = Uri.parse(address);
 
     try {
@@ -35,60 +35,64 @@ class LojaService {
       );
 
       // 3. ADICIONADO: Verificar se o pedido foi bem-sucedido antes de fazer parse do JSON
-      if (response.statusCode == 200) 
-      {
+      if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
-
         products.clear();
 
-        for (Map element in data) {
+        for (var element in data) { // 'var' é mais seguro que 'Map' aqui
           Product product = Product(
-            id: element['id'],
-            name: element['Name'],
-            description: element['Description'],
-            categoryId: element['category_id'],
-            cost: element['Cost'],
-            img: element['img'],
+            // 4. ADICIONADO: Operador '??' para evitar crashes se a BD tiver valores nulos
+            id: element['id'] ?? 0,
+            name: element['Name'] ?? 'Sem nome',
+            description: element['Description'] ?? 'Sem descrição',
+            categoryId: element['category_id'] ?? 0,
+            cost: (element['Cost'] ?? 0).toDouble(), // Garante que é um número
+            img: element['img'] ?? '',
           );
-
           products.add(product);
         }
+      } else {
+        throw Exception("Erro do servidor: Código ${response.statusCode}");
       }
+    } catch (e) {
+      print("Erro ao buscar produtos: $e");
+      rethrow; // Lança o erro para a UI tratar (ex: mostrar mensagem ao utilizador)
     }
   }
 
   Future<void> getProductDetails() async {
-    //sai da função se não existir produto para pesquisar
     if (productId == 0) return;
 
-    String apiUrl = "$baseUrl/api";
-    String address = "$apiUrl/products/$productId";
+    String address = "$baseUrl/api/products/$productId";
     var url = Uri.parse(address);
 
-    // var response = await http.get(url);
     try {
-          var response = await http.get(url).timeout(
-            const Duration(seconds: 35),
-            onTimeout: () {
-              throw Exception("O servidor está a iniciar. Tenta novamente.");
-            },
-          );
+      var response = await http.get(url).timeout(
+        const Duration(seconds: 35),
+        onTimeout: () {
+          throw Exception("O servidor está a iniciar. Tenta novamente.");
+        },
+      );
 
-          if (response.statusCode == 200) {
-            // Nota: Se a tua API retornar um objeto único, isto funciona. 
-            // Se retornar {"success": true, "data": {...}}, terás de usar jsonDecode(response.body)['data']
-            
-        Map element = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        // Nota: Se a tua API retornar um objeto único, isto funciona. 
+        // Se retornar {"success": true, "data": {...}}, terás de usar jsonDecode(response.body)['data']
+        Map<String, dynamic> element = jsonDecode(response.body);
 
         productToShow = Product(
-          id: element['id'],
-          name: element['Name'],
-          description: element['Description'],
-          categoryId: element['category_id'],
-          cost: element['Cost'],
-          img: element['img'],
+          id: element['id'] ?? 0,
+          name: element['Name'] ?? 'Sem nome',
+          description: element['Description'] ?? 'Sem descrição',
+          categoryId: element['category_id'] ?? 0,
+          cost: (element['Cost'] ?? 0).toDouble(),
+          img: element['img'] ?? '',
         );
+      } else {
+        throw Exception("Erro ao carregar detalhes: Código ${response.statusCode}");
       }
+    } catch (e) {
+      print("Erro ao buscar detalhes: $e");
+      rethrow;
     }
   }
 }
