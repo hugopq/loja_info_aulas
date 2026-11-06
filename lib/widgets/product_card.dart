@@ -28,7 +28,7 @@ class ProductCard extends StatelessWidget {
               color: Colors.red,
             ),
           ),
-          leading: Image.network("${service.baseUrl}${product.img}"),
+          leading: Image.network(product.imageUrl),
           onTap: showDetails,
         ),
       ),

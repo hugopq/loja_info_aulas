@@ -16,7 +16,7 @@ class Details extends StatelessWidget {
       body: Column(
         children: [
           Image.network(
-            "${service.baseUrl}${service.productToShow.img}",
+            service.productToShow.imageUrl,
             height: 400,
           ),
           Text(

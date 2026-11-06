@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:loja_info/config/app_config.dart';
 import 'package:loja_info/data_objects/product.dart';
 import "package:http/http.dart" as http;
 
@@ -16,21 +17,21 @@ class LojaService {
 
   // 1. MUDANÇA CRUCIAL: Usa HTTPS e o teu domínio real do Render
   // Substitui "teu-projeto" pelo nome real da tua app no Render
-  final String baseUrl = "https://loja-info.onrender.com"; 
-  
+
   String nextRoute = "/products";
 
   Future<void> getProducts() async {
-    String address = "$baseUrl/api/products";
+    String address = "${AppConfig.baseUrl}/api/products";
     var url = Uri.parse(address);
 
     try {
       // 2. ADICIONADO: Timeout e tratamento de erros
       // O Render gratuito "adormece". Pode demorar 20-30s a acordar na 1ª requisição.
       var response = await http.get(url).timeout(
-        const Duration(seconds: 35), 
+        const Duration(seconds: 35),
         onTimeout: () {
-          throw Exception("O servidor está a iniciar (Cold Start). Por favor, tenta novamente.");
+          throw Exception(
+              "O servidor está a iniciar (Cold Start). Por favor, tenta novamente.");
         },
       );
 
@@ -39,7 +40,8 @@ class LojaService {
         List<dynamic> data = jsonDecode(response.body);
         products.clear();
 
-        for (var element in data) { // 'var' é mais seguro que 'Map' aqui
+        for (var element in data) {
+          // 'var' é mais seguro que 'Map' aqui
           Product product = Product(
             // 4. ADICIONADO: Operador '??' para evitar crashes se a BD tiver valores nulos
             id: element['id'] ?? 0,
@@ -63,7 +65,7 @@ class LojaService {
   Future<void> getProductDetails() async {
     if (productId == 0) return;
 
-    String address = "$baseUrl/api/products/$productId";
+    String address = "${AppConfig.baseUrl}/api/products/$productId";
     var url = Uri.parse(address);
 
     try {
@@ -75,7 +77,7 @@ class LojaService {
       );
 
       if (response.statusCode == 200) {
-        // Nota: Se a tua API retornar um objeto único, isto funciona. 
+        // Nota: Se a tua API retornar um objeto único, isto funciona.
         // Se retornar {"success": true, "data": {...}}, terás de usar jsonDecode(response.body)['data']
         Map<String, dynamic> element = jsonDecode(response.body);
 
@@ -88,7 +90,8 @@ class LojaService {
           img: element['img'] ?? '',
         );
       } else {
-        throw Exception("Erro ao carregar detalhes: Código ${response.statusCode}");
+        throw Exception(
+            "Erro ao carregar detalhes: Código ${response.statusCode}");
       }
     } catch (e) {
       print("Erro ao buscar detalhes: $e");
