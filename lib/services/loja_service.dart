@@ -16,7 +16,7 @@ class LojaService {
 
   // 1. MUDANÇA CRUCIAL: Usa HTTPS e o teu domínio real do Render
   // Substitui "teu-projeto" pelo nome real da tua app no Render
-  final String baseUrl = "https://teu-projeto.onrender.com"; 
+  final String baseUrl = "https://loja-info.onrender.com"; 
   
   String nextRoute = "/products";
 
