@@ -15,7 +15,8 @@ class LojaService {
       img: "NO Product");
 
   //elementos da API
-  final String baseUrl = "http://127.0.0.1:8000";
+  // final String baseUrl = "http://127.0.0.1:8000";
+  final String baseUrl = "https://loja-info.onrender.com";
   String nextRoute = "/products";
 
   Future<void> getProducts() async {
@@ -23,23 +24,36 @@ class LojaService {
     String address = "$apiUrl/products";
     var url = Uri.parse(address);
 
-    var response = await http.get(url);
-
-    List<dynamic> data = jsonDecode(response.body);
-
-    products.clear();
-
-    for (Map element in data) {
-      Product product = Product(
-        id: element['id'],
-        name: element['Name'],
-        description: element['Description'],
-        categoryId: element['category_id'],
-        cost: element['Cost'],
-        img: element['img'],
+    try {
+      // 2. ADICIONADO: Timeout e tratamento de erros
+      // O Render gratuito "adormece". Pode demorar 20-30s a acordar na 1ª requisição.
+      var response = await http.get(url).timeout(
+        const Duration(seconds: 35), 
+        onTimeout: () {
+          throw Exception("O servidor está a iniciar (Cold Start). Por favor, tenta novamente.");
+        },
       );
 
-      products.add(product);
+      // 3. ADICIONADO: Verificar se o pedido foi bem-sucedido antes de fazer parse do JSON
+      if (response.statusCode == 200) 
+      {
+        List<dynamic> data = jsonDecode(response.body);
+
+        products.clear();
+
+        for (Map element in data) {
+          Product product = Product(
+            id: element['id'],
+            name: element['Name'],
+            description: element['Description'],
+            categoryId: element['category_id'],
+            cost: element['Cost'],
+            img: element['img'],
+          );
+
+          products.add(product);
+        }
+      }
     }
   }
 
@@ -51,17 +65,30 @@ class LojaService {
     String address = "$apiUrl/products/$productId";
     var url = Uri.parse(address);
 
-    var response = await http.get(url);
+    // var response = await http.get(url);
+    try {
+          var response = await http.get(url).timeout(
+            const Duration(seconds: 35),
+            onTimeout: () {
+              throw Exception("O servidor está a iniciar. Tenta novamente.");
+            },
+          );
 
-    Map element = jsonDecode(response.body);
+          if (response.statusCode == 200) {
+            // Nota: Se a tua API retornar um objeto único, isto funciona. 
+            // Se retornar {"success": true, "data": {...}}, terás de usar jsonDecode(response.body)['data']
+            
+        Map element = jsonDecode(response.body);
 
-    productToShow = Product(
-      id: element['id'],
-      name: element['Name'],
-      description: element['Description'],
-      categoryId: element['category_id'],
-      cost: element['Cost'],
-      img: element['img'],
-    );
+        productToShow = Product(
+          id: element['id'],
+          name: element['Name'],
+          description: element['Description'],
+          categoryId: element['category_id'],
+          cost: element['Cost'],
+          img: element['img'],
+        );
+      }
+    }
   }
 }
