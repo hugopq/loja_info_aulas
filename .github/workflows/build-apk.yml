@@ -1,25 +1,38 @@
-name: Build Flutter APK
+name: Build Flutter APK Release
 
 on:
   push:
-    branches: [ "main" ]
-  workflow_dispatch:  # Permite correr manualmente
+    branches: [ "main", "master" ]
+  workflow_dispatch: # Permite correr manualmente se precisares
 
 jobs:
   build:
     runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       
+      # 1. Configurar o Java 17 (Obrigatório para o Android Gradle Plugin moderno)
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      
+      # 2. Configurar o Flutter na versão exata que funciona no teu PC
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.47.9'  # Ajusta para a tua versão
+          flutter-version: '3.47.9'
           channel: 'stable'
       
-      - name: Get dependencies
+      - name: Install dependencies
         run: flutter pub get
+      
+      # 3. Limpar a cache do Gradle no servidor para evitar conflitos
+      - name: Clean Gradle Cache
+        run: cd android && ./gradlew clean
       
       - name: Build APK
         run: flutter build apk --release --split-per-abi
@@ -27,5 +40,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: flutter-apk
+          name: flutter-apk-release
           path: build/app/outputs/flutter-apk/*.apk
+          retention-days: 7
