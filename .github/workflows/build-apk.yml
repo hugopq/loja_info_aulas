@@ -13,22 +13,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
+      # MUDANÇA CRUCIAL: O Gradle 9.x funciona nativamente com Java 21
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21' 
       
+      # Usar 'stable' garante que o GitHub usa a mesma versão base que o teu PC
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.47.9'
+          flutter-version: 'stable'
           channel: 'stable'
       
       - name: Install dependencies
         run: flutter pub get
-      
-      # O passo de clean foi removido para evitar erros de ficheiros em falta
       
       - name: Build APK
         run: flutter build apk --release --split-per-abi
