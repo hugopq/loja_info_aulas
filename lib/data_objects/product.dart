@@ -1,5 +1,4 @@
 import 'package:loja_info/config/app_config.dart';
-import 'package:loja_info/services/loja_service.dart';
 
 class Product {
   int id;
